@@ -17,6 +17,9 @@
       "adaptiveIcon": {
         "backgroundColor": "#F4F6F4"
       }
-    }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
   }
 }
