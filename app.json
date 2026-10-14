@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "UofG Life",
+    "slug": "uofg-life",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F4F6F4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uk.ac.gla.uofglife"
+    },
+    "android": {
+      "package": "uk.ac.gla.uofglife",
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F6F4"
+      }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
