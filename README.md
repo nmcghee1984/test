@@ -20,7 +20,7 @@ A React Native / Expo prototype for a joined-up University of Glasgow student ex
 - [Dependency security assessment](docs/security/dependency-review-2026-10-15.md)
 - [Repository protection and release procedure](docs/repository-safeguards.md)
 - [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md)
-- [Student journey backlog #28](https://github.com/nmcghee1984/test/issues/28); plan/data-register [PR #29](https://github.com/nmcghee1984/test/pull/29) is proposed and not yet on main at this review.
+- [Student experience delivery plan](docs/student-experience-plan.md), [data register](docs/student-data-register.md) and [journey backlog #28](https://github.com/nmcghee1984/test/issues/28). These are proposed delivery priorities, not completed integrations.
 
 ## Run locally
 

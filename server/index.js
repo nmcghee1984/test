@@ -204,7 +204,6 @@ function createServer() {
         return;
       }
       const index = await readIndex();
-      globalThis.__discoveryIndex = index;
       if (url.pathname === "/api/integrations/status") {
         json(response, 200, {
           sources: sources.map((source) => publicSource(source, index.sources[source.id] ?? {})),
