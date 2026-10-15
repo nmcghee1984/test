@@ -1,6 +1,6 @@
 # Architecture and maintainer guide
 
-Updated 16 October 2026 for the screen/module refactor; source baseline before refactor: `6804f45`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and proposed documentation PR #29.
+Updated 16 October 2026 for the screen/module refactor; source baseline before refactor: `6804f45`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and [the delivery plan](student-experience-plan.md) / [data register](student-data-register.md).
 
 ## Current runtime and code map
 
