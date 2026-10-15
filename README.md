@@ -88,3 +88,7 @@ The prototype is designed for quick access: it opens directly to the dashboard w
 The visual theme follows the University's 2026 Brand Toolkit: University Blue (`#011451`), Secondary Light turquoise (`#4DBBC6`) and yellow (`#F2D25C`), with Noto Sans as the primary typeface and Noto Serif for display headings. The header uses the unboxed blue-text University logo from the [official toolkit artwork](https://www.gla.ac.uk/media/Media_1228330_smxx.zip), with its supplied artwork and exclusion space preserved. This is a prototype, not an official University service or endorsement; use of the logo here does not grant approval for public distribution.
 
 Ask UofG now withholds responses without explicit, structurally valid University citations and conservatively routes uncertain/sensitive enquiries to student services. See [evidence policy and repeatable evaluation](docs/assistant-evidence.md) for checks, false negatives and remaining accuracy limitations.
+
+### Personal timetable integration
+
+The default prototype shows **Timetable unavailable**, with no sample classes presented as personal information. Demo fixtures remain in the explicitly named sample data source. The isolated adapter and synthetic contract tests (`npm run test:timetable`, Node 24) prepare a future approved service; no student-system connection is enabled. See [architecture, evidence and institutional prerequisites](docs/timetable-integration.md).

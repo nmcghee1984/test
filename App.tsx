@@ -35,7 +35,7 @@ import {
   AppPreferences,
   HomeSection,
   SavedState,
-  createSampleDataSource,
+  createCampusDataSource,
   defaultPreferences,
   readSavedState,
   writeSavedState,
@@ -44,7 +44,7 @@ import { cancelReminder, scheduleReminder } from "./src/data/reminders";
 
 type Tab = "Home" | "Timetable" | "Map" | "Study" | "Discover" | "Ask" | "Events" | "Settings";
 type PlaceFilter = "All" | CampusPlace["category"];
-const campusData = createSampleDataSource();
+const campusData = createCampusDataSource();
 let textScale = 1;
 let highContrastText = false;
 
@@ -797,7 +797,7 @@ export default function App() {
             {todayClasses.length ? (
               todayClasses.slice(0, 2).map((item) => <ClassCard key={item.id} item={item} compact />)
             ) : (
-              <View style={styles.emptyCard}><Text style={styles.bodyMuted}>Nothing scheduled today. Enjoy the breathing room.</Text></View>
+              <View style={styles.emptyCard}><Text style={styles.bodyMuted}>Personal timetable unavailable — University student systems are not connected.</Text></View>
             )}
           </>
         ) : null}
@@ -880,7 +880,7 @@ export default function App() {
         </View>
         <View style={styles.dayTitleRow}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>{selectedDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</Text>
-          <Text style={styles.bodyMuted}>{classes.length} {classes.length === 1 ? "class" : "classes"}</Text>
+          <Text style={styles.bodyMuted}>Not connected</Text>
         </View>
         {classes.length ? (
           classes.map((item) => {
@@ -903,12 +903,12 @@ export default function App() {
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>☼</Text>
-            <Text style={styles.emptyTitle}>A free day</Text>
-            <Text style={styles.bodyMuted}>No classes scheduled. Make it yours.</Text>
+            <Text style={styles.emptyTitle}>Timetable unavailable</Text>
+            <Text style={styles.bodyMuted}>This prototype is not connected to University student systems. Check your timetable in the existing UofG Life app or MyCampus. Enrolment updates can take up to 24 hours.</Text>
           </View>
         )}
         <View style={styles.tipCard}><Text style={styles.tipTitle}>Getting around</Text><Text style={styles.tipBody}>Use the campus map to locate buildings and see sample lift information.</Text></View>
-        <View style={styles.disclaimer}><Text style={styles.disclaimerText}>Sample timetable · not connected to MyCampus.</Text></View>
+        <View style={styles.disclaimer}><Text style={styles.disclaimerText}>No personal timetable data is loaded. Room changes and class change notifications are not connected.</Text></View>
       </>
     );
   }
@@ -1335,7 +1335,7 @@ export default function App() {
 
         <Text accessibilityRole="header" style={styles.settingsSectionTitle}>Offline and data</Text>
         <View style={styles.settingsCard}>
-          <Text style={styles.settingsParagraph}>The sample timetable, campus directory and study listings are bundled with this prototype. Saved preferences stay on this device. OpenStreetMap tiles and external calendar links need an internet connection.</Text>
+          <Text style={styles.settingsParagraph}>The demonstration timetable is excluded from the default app. Sample campus directory and study listings are bundled with this prototype. Saved preferences stay on this device. OpenStreetMap tiles and external calendar links need an internet connection.</Text>
           <Text style={styles.settingsParagraph}>No approved UofG timetable, occupancy, booking or events API is configured. Live account sign-in, live capacity and real room bookings are not available. The app’s data-source interface is ready for a University-approved integration.</Text>
           <Text style={styles.settingsHint}>Sample hours, capacity and access notes are not verified. Events are unavailable in the app; use the official University listings.</Text>
         </View>
