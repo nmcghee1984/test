@@ -8,18 +8,43 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:discovery": "node --experimental-test-coverage --test --test-coverage-lines=90 --test-coverage-branches=75 --test-coverage-functions=90 server/discovery.test.js",
+    "test": "npm run test:discovery && npm run typecheck",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e && npm run build:web && npm run build:mobile-js",
+    "security:release-check": "npm audit --omit=dev --audit-level=moderate",
+    "build:web": "expo export --platform web",
+    "build:mobile-js": "expo export --platform android && expo export --platform ios",
+    "api": "node server/index.js",
+    "harvest": "node server/harvest.js",
+    "smoke:enlighten": "node server/smoke.js"
   },
   "dependencies": {
+    "@expo-google-fonts/noto-sans": "^0.4.2",
+    "@expo-google-fonts/noto-serif": "^0.4.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.0",
+    "expo-font": "~57.0.4",
+    "expo-notifications": "~57.0.22",
     "expo-status-bar": "~57.0.1",
+    "fast-xml-parser": "^5.11.2",
+    "leaflet": "^1.9.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-leaflet": "^5.0.0",
     "react-native": "0.86.3",
+    "react-native-maps": "1.27.2",
     "react-native-web": "0.21.4"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@expo/ngrok": "^4.1.0",
+    "@playwright/test": "^1.64.1",
+    "@types/leaflet": "^1.9.22",
     "@types/react": "~19.2.4",
     "typescript": "~6.0.3"
   }

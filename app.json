@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#F4F6F4"
+      "backgroundColor": "#011451"
     },
     "ios": {
       "supportsTablet": true,
@@ -15,11 +15,13 @@
     "android": {
       "package": "uk.ac.gla.uofglife",
       "adaptiveIcon": {
-        "backgroundColor": "#F4F6F4"
+        "backgroundColor": "#011451"
       }
     },
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-font",
+      "expo-notifications"
     ]
   }
 }

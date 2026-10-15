@@ -3,3 +3,10 @@ node_modules/
 dist/
 web-build/
 *.log
+.env
+.env.*
+!.env.example
+!.env.server.example
+/data/
+/playwright-report/
+/test-results/
