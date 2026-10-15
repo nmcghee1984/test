@@ -1,0 +1,10 @@
+.leaflet-container path.leaflet-interactive:focus-visible {
+  filter: drop-shadow(0 0 3px #011451);
+  stroke: #011451 !important;
+  stroke-width: 5px !important;
+}
+
+.leaflet-container .leaflet-control a:focus-visible {
+  outline: 3px solid #011451;
+  outline-offset: 2px;
+}
