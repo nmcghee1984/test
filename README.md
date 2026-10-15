@@ -47,7 +47,7 @@ Playwright saves traces, screenshots and video on failures under the ignored `te
 
 Successful mobile JavaScript export is not a native binary build and does not verify native maps, push/local notification delivery or OS permission behavior. These automated checks are not a substitute for University/device acceptance tests.
 
-The Node API and Expo app both read `.env`. The API is restricted to loopback addresses (`127.0.0.1`, `localhost` or `::1`); startup fails if `API_HOST` is set to a LAN or public interface. The app refuses to send search queries to non-loopback HTTP endpoints. For physical-device testing, keep the API bound to loopback and use a trusted HTTPS tunnel with access controls that forwards to `127.0.0.1:8787`; set `EXPO_PUBLIC_DISCOVERY_API_URL` to that tunnel's HTTPS URL. Do not expose the unauthenticated API through a public tunnel without access controls. Local HTTP is supported only for loopback development.
+The Node API and Expo app both read `.env`. The API is restricted to loopback addresses (`127.0.0.1`, `localhost` or `::1`); startup fails if `API_HOST` is set to a LAN or public interface. The app refuses to send search queries to non-loopback HTTP endpoints. For a reproducible private phone setup, follow [Expo Go on a physical device](docs/device-testing.md) (`npm run api:device`, Tailscale Serve and `npm run device:check`). For physical-device testing, keep the API bound to loopback and use a trusted HTTPS tunnel with access controls that forwards to `127.0.0.1:8787`; set `EXPO_PUBLIC_DISCOVERY_API_URL` to that tunnel's HTTPS URL. Do not expose the unauthenticated API through a public tunnel without access controls. Local HTTP is supported only for loopback development.
 
 ### Security release gate — currently blocked
 

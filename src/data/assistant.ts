@@ -1,6 +1,5 @@
+import { API_URL, apiFetch } from "./apiConnection";
 import { isSecureApiUrl } from "./networkPolicy";
-
-const API_URL = (process.env.EXPO_PUBLIC_DISCOVERY_API_URL || "http://localhost:8787").replace(/\/+$/, "");
 
 export type AssistantStatus = {
   configured: boolean;
@@ -39,7 +38,7 @@ function isUofGSourceUrl(value: string): boolean {
 
 export async function fetchAssistantStatus(): Promise<AssistantStatus> {
   assertAllowedEndpoint();
-  const response = await fetch(`${API_URL}/api/assistant/status`, {
+  const response = await apiFetch("/api/assistant/status", {
     headers: { accept: "application/json" },
     signal: AbortSignal.timeout(10_000),
   });
@@ -49,7 +48,7 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
 
 export async function askAssistant(question: string): Promise<AssistantAnswer> {
   assertAllowedEndpoint();
-  const response = await fetch(`${API_URL}/api/assistant`, {
+  const response = await apiFetch("/api/assistant", {
     method: "POST",
     headers: {
       accept: "application/json",
