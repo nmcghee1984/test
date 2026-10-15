@@ -21,7 +21,7 @@ type Message = {
   sources?: AssistantSource[];
 };
 
-const OFFICIAL_SITE = "https://www.gla.ac.uk/";
+const OFFICIAL_SITE = "https://www.gla.ac.uk/myglasgow/students/";
 const STARTER_QUESTIONS = [
   "How do I get academic support?",
   "Where can I find wellbeing help?",
@@ -148,10 +148,13 @@ export default function AskUofGScreen({
               ]}>
                 {message.text}
               </NativeText>
+              {message.from === "assistant" ? <NativeText style={styles.footer}>
+                {message.sources?.length ? "AI-generated · citations do not guarantee accuracy" : "Answer unverified · service signposting"}
+              </NativeText> : null}
               {message.from === "assistant" && message.sources?.length ? (
                 <View style={styles.sources}>
                   <NativeText style={[styles.sourceHeading, { fontSize: 13 * scale }]}>
-                    Official UofG sources
+                    Cited University pages · check before acting
                   </NativeText>
                   {message.sources.map((source) => (
                     <NativePressable
@@ -173,11 +176,11 @@ export default function AskUofGScreen({
                 <NativePressable
                   onPress={() => void openOfficialSite()}
                   accessibilityRole="link"
-                  accessibilityLabel="Search the official University of Glasgow website"
+                  accessibilityLabel="Open University student services"
                   style={styles.sourceLink}
                 >
                   <NativeText style={[styles.sourceLinkText, { fontSize: 14 * scale }]}>
-                    Visit the official UofG website
+                    Contact University student services
                   </NativeText>
                 </NativePressable>
               ) : null}
@@ -214,7 +217,12 @@ export default function AskUofGScreen({
           <NativeText style={[styles.sendText, { fontSize: 15 * scale }]}>Send</NativeText>
         </NativePressable>
       </View>
+      <NativePressable accessibilityRole="link" accessibilityLabel="Open University wellbeing services"
+        onPress={() => void Linking.openURL("https://www.gla.ac.uk/myglasgow/counselling/").catch(() => onError("Could not open wellbeing services."))}>
+        <NativeText style={styles.sourceLinkText}>University wellbeing services</NativeText>
+      </NativePressable>
       <NativeText style={[styles.footer, { fontSize: 12 * scale }]}>
+
         No account needed · not an official UofG service · verify important answers
       </NativeText>
     </View>

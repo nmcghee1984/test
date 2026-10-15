@@ -25,9 +25,9 @@ import { NotoSerif_700Bold } from "@expo-google-fonts/noto-serif/700Bold";
 import CampusMap from "./src/components/CampusMap";
 import AskUofGScreen from "./src/components/AskUofGScreen";
 import DiscoverScreen from "./src/components/DiscoverScreen";
+import { universityEvents, type CampusEvent } from "./src/data/events";
 import type { DiscoveryRecord } from "./src/data/discovery";
 import {
-  CampusEvent,
   CampusPlace,
   ClassItem,
 } from "./src/data/mockData";
@@ -484,7 +484,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    readSavedState().then((saved) => {
+    readSavedState().then(async (saved) => {
       if (saved) {
         setPreferences({ ...defaultPreferences, ...saved.preferences });
         setSavedSpaces(saved.savedSpaces ?? []);
@@ -492,7 +492,20 @@ export default function App() {
         setSavedPlaces(saved.savedPlaces ?? []);
         setSavedResearch(saved.savedResearch ?? []);
         setResearchInterests(saved.researchInterests ?? []);
-        setReminders(saved.reminders ?? {});
+        // Retire reminders scheduled from the three removed demonstration events.
+        // Keep failed cancellations available for retry through Settings.
+        const nextReminders = { ...(saved.reminders ?? {}) };
+        for (const id of ["freshers", "careers", "wellbeing"]) {
+          const key = `event:${id}`;
+          if (!nextReminders[key]) continue;
+          try {
+            await cancelReminder(key, nextReminders[key]);
+            delete nextReminders[key];
+          } catch {
+            setStorageError("An old sample-event reminder could not be cancelled. Turn off event reminders in Settings to retry.");
+          }
+        }
+        setReminders(nextReminders);
         setNoticeVisible(!saved.dismissedNotice);
       }
     }).catch((error: unknown) => {
@@ -1154,6 +1167,12 @@ export default function App() {
           <Text style={styles.eventHeroBody}>Explore student life, careers and wellbeing across campus.</Text>
           <View style={styles.eventHeroShape} />
         </View>
+        <View style={styles.tipCard}>
+          <Text accessibilityRole="header" style={styles.tipTitle}>Event data unavailable</Text>
+          <Text accessibilityLiveRegion="polite" style={styles.tipBody}>{universityEvents.message}</Text>
+          <Text style={styles.tipBody}>No event data is cached. This app does not automatically refresh University listings.</Text>
+          <ActionButton title="Browse official University events" onPress={() => void openExternal(universityEvents.listingsUrl)} />
+        </View>
         <TextInput
           value={eventSearch}
           onChangeText={setEventSearch}
@@ -1214,8 +1233,8 @@ export default function App() {
             onCalendar={() => addEventToCalendar(event)}
           />
         ))}
-        {!displayedEvents.length ? <View style={styles.emptyCard}><Text style={styles.bodyMuted}>No upcoming events match these filters.</Text></View> : null}
-        <View style={styles.disclaimer}><Text style={styles.disclaimerText}>Sample events · check official UofG channels for details.</Text></View>
+        {!displayedEvents.length ? <View style={styles.emptyCard}><Text style={styles.bodyMuted}>No event listings are connected. Search and saved filters will be available when a source is connected.</Text></View> : null}
+        <View style={styles.disclaimer}><Text style={styles.disclaimerText}>University of Glasgow · open the official listings for current dates, venues and booking information.</Text></View>
       </>
     );
   }
@@ -1318,7 +1337,7 @@ export default function App() {
         <View style={styles.settingsCard}>
           <Text style={styles.settingsParagraph}>The sample timetable, campus directory and study listings are bundled with this prototype. Saved preferences stay on this device. OpenStreetMap tiles and external calendar links need an internet connection.</Text>
           <Text style={styles.settingsParagraph}>No approved UofG timetable, occupancy, booking or events API is configured. Live account sign-in, live capacity and real room bookings are not available. The app’s data-source interface is ready for a University-approved integration.</Text>
-          <Text style={styles.settingsHint}>Sample hours, capacity, access notes and event listings are not verified; confirm details with the University before relying on them.</Text>
+          <Text style={styles.settingsHint}>Sample hours, capacity and access notes are not verified. Events are unavailable in the app; use the official University listings.</Text>
         </View>
       </>
     );

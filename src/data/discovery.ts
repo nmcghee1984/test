@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL, apiFetch } from "./apiConnection";
 import { isSecureApiUrl } from "./networkPolicy";
 
 export type DataMode = "LIVE" | "CACHED" | "DEMO" | "UNAVAILABLE";
@@ -56,7 +57,6 @@ export type DiscoveryStatus = {
   coverage: string;
 };
 
-const API_URL = (process.env.EXPO_PUBLIC_DISCOVERY_API_URL || "http://localhost:8787").replace(/\/+$/, "");
 const CACHE_PREFIX = "uofg-life:discovery-cache:v1:";
 const SOURCE_HOSTS: Record<string, string> = {
   "enlighten-publications": "eprints.gla.ac.uk",
@@ -94,7 +94,7 @@ async function fetchJson<T>(path: string): Promise<T> {
   if (!isSecureApiUrl(API_URL)) {
     throw new Error("Refusing to send discovery queries to an insecure API endpoint. Configure HTTPS; plain HTTP is allowed only for localhost development.");
   }
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await apiFetch(path, {
     headers: { accept: "application/json" },
   });
   if (!response.ok) throw new Error(`Discovery service returned HTTP ${response.status}.`);

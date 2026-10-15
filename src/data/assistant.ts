@@ -1,6 +1,5 @@
+import { API_URL, apiFetch } from "./apiConnection";
 import { isSecureApiUrl } from "./networkPolicy";
-
-const API_URL = (process.env.EXPO_PUBLIC_DISCOVERY_API_URL || "http://localhost:8787").replace(/\/+$/, "");
 
 export type AssistantStatus = {
   configured: boolean;
@@ -16,6 +15,8 @@ export type AssistantSource = {
 export type AssistantAnswer = {
   answer: string;
   sources: AssistantSource[];
+  status: "cited" | "unverified";
+  serviceLinks?: AssistantSource[];
 };
 
 function assertAllowedEndpoint() {
@@ -39,7 +40,7 @@ function isUofGSourceUrl(value: string): boolean {
 
 export async function fetchAssistantStatus(): Promise<AssistantStatus> {
   assertAllowedEndpoint();
-  const response = await fetch(`${API_URL}/api/assistant/status`, {
+  const response = await apiFetch("/api/assistant/status", {
     headers: { accept: "application/json" },
     signal: AbortSignal.timeout(10_000),
   });
@@ -49,7 +50,7 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
 
 export async function askAssistant(question: string): Promise<AssistantAnswer> {
   assertAllowedEndpoint();
-  const response = await fetch(`${API_URL}/api/assistant`, {
+  const response = await apiFetch("/api/assistant", {
     method: "POST",
     headers: {
       accept: "application/json",
@@ -59,6 +60,7 @@ export async function askAssistant(question: string): Promise<AssistantAnswer> {
     signal: AbortSignal.timeout(30_000),
   });
   const payload = await response.json() as {
+    status?: unknown;
     answer?: unknown;
     sources?: unknown;
     error?: unknown;
@@ -72,8 +74,12 @@ export async function askAssistant(question: string): Promise<AssistantAnswer> {
   const sources = Array.isArray(payload.sources)
     ? payload.sources.filter((source): source is { title: string; url: string } =>
       typeof source?.title === "string" && typeof source?.url === "string"
-      && isUofGSourceUrl(source.url),
+      && isUofGSourceUrl(source.url) && new URL(source.url).pathname !== "/"
+      && !new URL(source.url).search && !new URL(source.url).hash,
     )
     : [];
-  return { answer: payload.answer.trim(), sources };
+  if (payload.status !== "cited" || sources.length === 0 || !Array.isArray(payload.sources) || sources.length !== payload.sources.length) {
+    return { status: "unverified", answer: "I cannot verify an answer to this enquiry. Please contact University student services.", sources: [] };
+  }
+  return { status: "cited", answer: payload.answer.trim(), sources };
 }
