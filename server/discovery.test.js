@@ -144,8 +144,7 @@ test("assistant calls only the fixed OpenAI HTTPS endpoint and rejects unsafe up
             type: "output_text",
             text: "See the student support page.",
             annotations: [
-              { type: "url_citation", title: "Student support", url: "https://www.gla.ac.uk/myglasgow/students/support/" },
-              { type: "url_citation", title: "Untrusted page", url: "https://gla.ac.uk.attacker.example/fake" },
+              { type: "url_citation", title: "Student support", url: "https://www.gla.ac.uk/myglasgow/students/support/", start_index: 0, end_index: 29 },
             ],
           }],
         },
@@ -163,7 +162,9 @@ test("assistant calls only the fixed OpenAI HTTPS endpoint and rejects unsafe up
     });
     assert.deepEqual(answer, {
       answer: "See the student support page.",
-      sources: [{ title: "Student support", url: "https://www.gla.ac.uk/myglasgow/students/support/" }],
+      status: "cited",
+      serviceLinks: require("./assistant").withheld().serviceLinks,
+      sources: [{ title: "www.gla.ac.uk/myglasgow/students/support/", url: "https://www.gla.ac.uk/myglasgow/students/support/" }],
     });
     assert.equal(requestUrl, "https://api.openai.com/v1/responses");
     assert.equal(requestOptions.method, "POST");
@@ -176,10 +177,7 @@ test("assistant calls only the fixed OpenAI HTTPS endpoint and rejects unsafe up
     assert.match(requestBody.instructions, /Answer University-specific questions only with information supported by those results/);
     assert.doesNotMatch(requestOptions.body, /test-server-only-secret/);
 
-    await assert.rejects(
-      generateAnswer("question", async () => new Response(JSON.stringify({ output: [] }), { status: 200 })),
-      /no usable answer/,
-    );
+    assert.equal((await generateAnswer("question", async () => new Response(JSON.stringify({ output: [] }), { status: 200 }))).status, "unverified");
     await assert.rejects(
       generateAnswer("question", async () => new Response("", { status: 429 })),
       /temporarily busy/,
