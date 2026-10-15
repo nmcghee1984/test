@@ -95,8 +95,13 @@ function searchRecords(index, query) {
 }
 
 function createServer() {
+  const authorize = require("./deviceAccess").deviceAccess();
   const allowAssistantRequest = createRateLimiter({ limit: 5, windowMs: 60_000 });
   return http.createServer(async (request, response) => {
+    if (!authorize(request)) {
+      json(response, 403, { error: "Device access denied. Check Tailscale and API_TESTER_LOGINS." }, { origin: null, cacheControl: "no-store" });
+      return;
+    }
     let url;
     try {
       url = new URL(request.url, `http://${request.headers.host || "localhost"}`);

@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:discovery": "node --experimental-test-coverage --test --test-coverage-lines=90 --test-coverage-branches=75 --test-coverage-functions=90 server/discovery.test.js",
+    "test:discovery": "node --experimental-test-coverage --test --test-coverage-lines=90 --test-coverage-branches=75 --test-coverage-functions=90 server/discovery.test.js server/device.test.js",
     "test:assistant": "node --test server/assistant.test.js",
     "test": "npm run test:discovery && npm run test:assistant && npm run typecheck",
     "test:e2e": "playwright test",
@@ -19,7 +19,10 @@
     "build:mobile-js": "expo export --platform android && expo export --platform ios",
     "api": "node server/index.js",
     "harvest": "node server/harvest.js",
-    "smoke:enlighten": "node server/smoke.js"
+    "smoke:enlighten": "node server/smoke.js",
+    "api:device": "node scripts/device-api.js",
+    "device:check": "node scripts/device-check.js",
+    "test:device": "node --test server/device.test.js"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans": "^0.4.2",
