@@ -31,3 +31,16 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  security:
+    name: Security release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run security:release-check
