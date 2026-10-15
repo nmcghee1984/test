@@ -1,15 +1,17 @@
 # Architecture and maintainer guide
 
-Reviewed 16 October 2026 against main `6804f45`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and proposed documentation PR #29.
+Updated 16 October 2026 for the screen/module refactor; source baseline before refactor: `6804f45`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and proposed documentation PR #29.
 
 ## Current runtime and code map
 
 | Boundary | Implementation | Responsibility / limitation |
 | --- | --- | --- |
-| App composition | `App.tsx` | Navigation, most screens, preferences/favourites and reminder coordination. Currently a large component; see maintainability work below. |
-| Separate feature screens | `src/components/DiscoverScreen.tsx`, `AskUofGScreen.tsx` | Public discovery and experimental assistant UI. |
+| App composition | `App.tsx` | App shell/navigation, explicit screen props, preferences/favourites and reminder coordination. Screen rendering, primitives, styles and scheduling helpers are separate modules. |
+| Journey screens | `src/screens/*Screen.tsx`; existing `src/components/DiscoverScreen.tsx`, `AskUofGScreen.tsx` | Explicitly typed inputs for Home, Timetable, Map, Study, Events and Settings; existing discovery/assistant boundaries retained. |
+| Shared UI | `src/ui/primitives.tsx`, `theme.ts`, `styles.ts`; `src/components/CampusCards.tsx` | Context-based text-size/contrast, shared controls/cards and styling. No mutable module-level appearance settings. |
+| Models and scheduling | `src/domain/campus.ts`, `src/utils/schedule.ts`, `src/navigation.ts` | Source-independent prototype model declarations, labelled sample date/calendar helpers and navigation types. |
 | Platform map/reminders | `CampusMap.native.tsx`, `CampusMap.web.tsx`; `src/data/reminders.native.ts`, `.web.ts` | Expo resolves platform-specific files. Native maps stay out of web. Browser reminders are foreground timers, not durable push delivery. |
-| Prototype domain data | `src/data/mockData.ts`, `storage.ts`, `events.ts` | Sample timetable/place/study fixtures and local saved state; events are explicitly unavailable. The data-source type currently inherits fixture types. |
+| Prototype domain data | `src/data/mockData.ts`, `storage.ts`, `events.ts` | Sample timetable/place/study fixtures and local saved state; events are explicitly unavailable. The data-source uses explicit campus model types; compatibility type exports preserve existing fixture consumers. |
 | Client API transport | `src/data/apiConnection.ts`, `networkPolicy.js`, `discovery.ts`, `assistant.ts` | HTTPS or loopback HTTP validation, timeout/connection errors, discovery cache and assistant-response filtering. JSON type casts do not constitute complete runtime schema validation. |
 | Local HTTP backend | `server/index.js`, `deviceAccess.js`, `env.js` | Source index/search and assistant routes; loopback development or private Serve identity mode. No University SSO or production deployment. |
 | Public research ingestion | `sources.js`, `oai.js`, `harvest.js`, `store.js` | Fixed source catalogue, bounded OAI-PMH/XML reads, normalization, deletions and atomic local index persistence. |
@@ -52,17 +54,13 @@ Errors include 400 invalid input, 403 access/origin denied, 404 route absent, 40
 
 Server-side provider credentials, bounded public ingestion/persistence, shared URL/transport policy, native/web rendering boundaries, and separately extracted discovery/assistant screens are understandable foundations. Existing tests check meaningful malformed-input, access and evidence behaviours. These strengths do not establish a complete production architecture.
 
-## Maintainability work before journey expansion
+## Refactor status and remaining maintainability work
 
-Tracked in [#30](https://github.com/nmcghee1984/test/issues/30):
+Tracked in [#30](https://github.com/nmcghee1984/test/issues/30). The first bounded refactor extracts six screens with explicit props, shared cards/primitives/styles, local-date helpers and campus model declarations. Appearance settings use React context; the unused server global index assignment is removed. Saved-state keys, sample/unavailable labels, actions and API behaviour are preserved.
 
-1. `App.tsx` is 1,644 lines at this baseline and owns most screen/state concerns. Extract one screen at a time behind explicit props/hooks; keep the app root as composition, preserve UI and verify parity.
-2. Replace mutable module-level text-scale/contrast variables with explicit React context/theme state as part of that extraction.
-3. Define source-independent course/assessment/place models before private adapters; do not grow production contracts from `typeof` sample fixtures. Reuse timetable PR #7.
-4. Separate persistence/reminder coordination and strengthen runtime validation of external/cached JSON. Keep saved-state migration and malformed-data recovery explicit.
-5. The server assigns `globalThis.__discoveryIndex`; no reader was found in repository search. Remove it after regression verification or document a real consumer.
+App-level persistence and reminder orchestration still live in the app shell. Extract these into focused hooks in subsequent behaviour-preserving changes, with saved-state migration and cancellation/error recovery kept explicit. External/cached JSON validation is still incomplete; strengthen schema validation before private integrations. The prototype models are not an approved live-data contract. Reuse timetable PR #7 rather than inventing another adapter.
 
-These are scoped findings from a source/documentation review, not a full audit, exploit assessment or native-device certification. Do not rewrite the app wholesale or combine this refactor with a major SDK migration.
+This is a source/documentation review and refactor, not a full security audit or native-device certification. Do not combine this work with a major SDK migration or claim private/student integrations are operational.
 
 ## Where changes belong
 

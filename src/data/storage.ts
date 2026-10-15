@@ -1,11 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { CampusPlace, ClassItem, StudySpace } from "../domain/campus";
+import type { DiscoveryRecord } from "./discovery";
+import { universityEvents, type CampusEvent } from "./events";
 import {
   campusPlaces,
   sampleClasses,
   studySpaces,
 } from "./mockData";
-import { universityEvents, type CampusEvent } from "./events";
-import type { DiscoveryRecord } from "./discovery";
 
 export type HomeSection = "timetable" | "study" | "saved";
 
@@ -127,9 +128,9 @@ export async function writeSavedState(state: SavedState): Promise<void> {
 }
 
 export type CampusDataSource = {
-  timetable: typeof sampleClasses;
-  places: typeof campusPlaces;
-  studySpaces: typeof studySpaces;
+  timetable: Record<string, ClassItem[]>;
+  places: CampusPlace[];
+  studySpaces: StudySpace[];
   events: CampusEvent[];
   isSample: boolean;
 };
