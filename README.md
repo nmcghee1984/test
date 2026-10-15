@@ -53,7 +53,7 @@ The Node API and Expo app both read `.env`. The API is restricted to loopback ad
 
 Do not publish or distribute a release until `npm run security:release-check` exits successfully. It audits the installed production dependency tree and fails on moderate or higher advisories. As of 2026-10-15 it reports 23 advisories (16 high, 7 moderate), primarily through the Expo/Metro toolchain. The available automatic remediation downgrades Expo 57 to Expo 44, which is incompatible with this app; do not use `npm audit fix --force`. Keep Expo 57, monitor upstream for compatible patched releases, update the lockfile and rerun `npm run test:all` plus this release check before lifting the block.
 
-There is currently no release workflow in this repository, so the release check is an explicit manual gate and must be run by whoever builds or distributes an artifact. Automated app tests passing does not override this security block.
+The Security release gate runs separately in CI. The manual Release candidate workflow also enforces the audit before uploading any candidate artifact. There is no automated publishing workflow; whoever distributes an artifact must verify the gate and complete acceptance checks. Automated app tests passing does not override this security block.
 
 The discovery tab uses **CACHED** for metadata from the local harvested index and **UNAVAILABLE** for sources without indexed data; locally saved research records are cached on-device as well. API health indicates whether the local service responds; it does not mean repository data is real-time. Other campus features continue to show their separate **sample/demo** labels. Search, bookmarks and explicit interest preferences are local-first; recommendations are based on matching the current result page and show their matching interest terms.
 
@@ -88,3 +88,12 @@ The prototype is designed for quick access: it opens directly to the dashboard w
 The visual theme follows the University's 2026 Brand Toolkit: University Blue (`#011451`), Secondary Light turquoise (`#4DBBC6`) and yellow (`#F2D25C`), with Noto Sans as the primary typeface and Noto Serif for display headings. The header uses the unboxed blue-text University logo from the [official toolkit artwork](https://www.gla.ac.uk/media/Media_1228330_smxx.zip), with its supplied artwork and exclusion space preserved. This is a prototype, not an official University service or endorsement; use of the logo here does not grant approval for public distribution.
 
 Ask UofG now withholds responses without explicit, structurally valid University citations and conservatively routes uncertain/sensitive enquiries to student services. See [evidence policy and repeatable evaluation](docs/assistant-evidence.md) for checks, false negatives and remaining accuracy limitations.
+
+## Repository safeguards
+
+See [contributing](CONTRIBUTING.md), [security reporting](SECURITY.md) and
+[repository safeguards and release procedure](docs/repository-safeguards.md).
+CI includes a separate dependency security gate; functional success is not security
+clearance. The manual Release candidate workflow refuses to upload a web candidate
+unless its audit and quality checks pass. GitHub branch protection and account
+security settings still require administrator activation as documented.

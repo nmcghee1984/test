@@ -1,0 +1,37 @@
+name: Release candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-candidate
+  cancel-in-progress: false
+jobs:
+  candidate:
+    name: Audited candidate build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Block artifacts with unresolved dependency advisories
+        run: npm run security:release-check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:all
+      - run: npm run build:web
+      - name: Record source revision
+        run: git rev-parse HEAD > dist/SOURCE_COMMIT.txt
+      - name: Retain web candidate for acceptance testing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-candidate-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
