@@ -40,18 +40,6 @@ export type StudySpace = {
   facilities: string[];
 };
 
-export type CampusEvent = {
-  id: string;
-  date: string;
-  day: string;
-  month: string;
-  time: string;
-  title: string;
-  place: string;
-  category: string;
-  description: string;
-};
-
 export const sampleClasses: Record<string, ClassItem[]> = {
   Mon: [
     { id: "mon-1", start: "09:00", end: "10:00", title: "Human Computer Interaction", detail: "Lecture · Dr A. MacLeod", place: "Boyd Orr, Lecture Theatre 1", kind: "Lecture" },
@@ -97,10 +85,4 @@ export const studySpaces: StudySpace[] = [
   { id: "library-ground", name: "Learning Hub", building: "University Library", level: "Ground floor", available: 42, total: 120, walk: "2 min", quiet: false, openingHours: "Daily 08:00–22:00 · sample", openFrom: "08:00", openUntil: "22:00", openWeekends: true, stepFree: true, facilities: ["Power sockets", "Cafe nearby", "Accessible route"] },
   { id: "boyd-4", name: "Study Zone", building: "Boyd Orr Building", level: "Level 4", available: 9, total: 36, walk: "4 min", quiet: true, openingHours: "Weekdays 08:00–20:00 · sample", openFrom: "08:00", openUntil: "20:00", openWeekends: false, stepFree: true, facilities: ["Power sockets", "Quiet study", "Lift access"] },
   { id: "james-2", name: "Group Study", building: "James Watt South", level: "Level 2", available: 6, total: 24, walk: "6 min", quiet: false, openingHours: "Weekdays 08:00–20:00 · sample", openFrom: "08:00", openUntil: "20:00", openWeekends: false, stepFree: true, facilities: ["Group tables", "Power sockets", "Lift access"] },
-];
-
-export const campusEvents: CampusEvent[] = [
-  { id: "freshers", date: "2026-10-18", day: "18", month: "OCT", time: "18:00", title: "Gilmorehill After Hours", place: "Gilmorehill Campus", category: "SOCIAL", description: "An evening of music, food and campus activities." },
-  { id: "careers", date: "2026-10-20", day: "20", month: "OCT", time: "12:30", title: "Tech & Innovation Careers Fair", place: "James McCune Smith Learning Hub", category: "CAREERS", description: "Meet employers and discover graduate opportunities." },
-  { id: "wellbeing", date: "2026-10-22", day: "22", month: "OCT", time: "10:00", title: "Mindful Campus Walk", place: "Meet at the Main Gate", category: "WELLBEING", description: "A relaxed guided walk around the West End." },
 ];

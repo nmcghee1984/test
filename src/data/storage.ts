@@ -1,10 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  campusEvents,
   campusPlaces,
   sampleClasses,
   studySpaces,
 } from "./mockData";
+import { universityEvents, type CampusEvent } from "./events";
 import type { DiscoveryRecord } from "./discovery";
 
 export type HomeSection = "timetable" | "study" | "saved";
@@ -130,7 +130,7 @@ export type CampusDataSource = {
   timetable: typeof sampleClasses;
   places: typeof campusPlaces;
   studySpaces: typeof studySpaces;
-  events: typeof campusEvents;
+  events: CampusEvent[];
   isSample: boolean;
 };
 
@@ -140,7 +140,7 @@ export function createSampleDataSource(): CampusDataSource {
     timetable: sampleClasses,
     places: campusPlaces,
     studySpaces,
-    events: campusEvents,
+    events: universityEvents.events,
     isSample: true,
   };
 }
