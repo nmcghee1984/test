@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test:discovery": "node --experimental-test-coverage --test --test-coverage-lines=90 --test-coverage-branches=75 --test-coverage-functions=90 server/discovery.test.js",
     "test:assistant": "node --test server/assistant.test.js",
-    "test": "npm run test:discovery && npm run test:assistant && npm run typecheck",
+    "test": "npm run test:discovery && npm run test:assistant && npm run test:timetable && npm run typecheck",
     "test:e2e": "playwright test",
     "test:all": "npm test && npm run test:e2e && npm run build:web && npm run build:mobile-js",
     "security:release-check": "npm audit --omit=dev --audit-level=moderate",
@@ -19,7 +19,8 @@
     "build:mobile-js": "expo export --platform android && expo export --platform ios",
     "api": "node server/index.js",
     "harvest": "node server/harvest.js",
-    "smoke:enlighten": "node server/smoke.js"
+    "smoke:enlighten": "node server/smoke.js",
+    "test:timetable": "node --experimental-strip-types --test src/data/timetable.test.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans": "^0.4.2",

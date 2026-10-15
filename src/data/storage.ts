@@ -1,3 +1,4 @@
+import { unavailableTimetable } from "./timetable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   campusPlaces,
@@ -143,4 +144,9 @@ export function createSampleDataSource(): CampusDataSource {
     events: universityEvents.events,
     isSample: true,
   };
+}
+
+/** Default prototype has no access to personal student records. */
+export function createCampusDataSource() {
+  return { ...createSampleDataSource(), timetable: {} as typeof sampleClasses, timetableStatus: unavailableTimetable() };
 }
