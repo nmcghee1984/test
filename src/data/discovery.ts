@@ -1,3 +1,4 @@
+import { isDiscoveryPage, isDiscoveryStatus } from "./validation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL, apiFetch } from "./apiConnection";
 import { isSecureApiUrl } from "./networkPolicy";
@@ -79,18 +80,19 @@ export function isSafeRepositoryRecordUrl(record: DiscoveryRecord): boolean {
   }
 }
 
-async function getCached<T>(key: string): Promise<T | null> {
-  const value = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
-  if (!value) return null;
+async function getCached<T>(key: string, validate: (value: unknown) => value is T): Promise<T | null> {
   try {
-    return JSON.parse(value) as T;
+    const value = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
+    if (!value) return null;
+    const parsed: unknown = JSON.parse(value);
+    return validate(parsed) ? parsed : null;
   } catch (error) {
     console.error("Could not read cached discovery data.", error);
     return null;
   }
 }
 
-async function fetchJson<T>(path: string): Promise<T> {
+async function fetchJson<T>(path: string, validate: (value: unknown) => value is T): Promise<T> {
   if (!isSecureApiUrl(API_URL)) {
     throw new Error("Refusing to send discovery queries to an insecure API endpoint. Configure HTTPS; plain HTTP is allowed only for localhost development.");
   }
@@ -98,7 +100,9 @@ async function fetchJson<T>(path: string): Promise<T> {
     headers: { accept: "application/json" },
   });
   if (!response.ok) throw new Error(`Discovery service returned HTTP ${response.status}.`);
-  return response.json() as Promise<T>;
+  const value: unknown = await response.json();
+  if (!validate(value)) throw new Error("Discovery service returned an unsupported data format.");
+  return value;
 }
 
 export async function fetchDiscoveryPage(query: string, source: string | null, cursor = "0"): Promise<DiscoveryPage> {
@@ -106,7 +110,7 @@ export async function fetchDiscoveryPage(query: string, source: string | null, c
   if (source) params.set("source", source);
   const key = `search:${params.toString()}`;
   try {
-    const page = await fetchJson<DiscoveryPage>(`/api/discover?${params.toString()}`);
+    const page = await fetchJson<DiscoveryPage>(`/api/discover?${params.toString()}`, isDiscoveryPage);
     try {
       await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(page));
     } catch (error) {
@@ -114,7 +118,7 @@ export async function fetchDiscoveryPage(query: string, source: string | null, c
     }
     return page;
   } catch (error) {
-    const cached = await getCached<DiscoveryPage>(key);
+    const cached = await getCached(key, isDiscoveryPage);
     if (cached) {
       return {
         ...cached,
@@ -129,7 +133,7 @@ export async function fetchDiscoveryPage(query: string, source: string | null, c
 export async function fetchDiscoveryStatus(): Promise<DiscoveryStatus> {
   const key = "status";
   try {
-    const status = await fetchJson<DiscoveryStatus>("/api/integrations/status");
+    const status = await fetchJson("/api/integrations/status", isDiscoveryStatus);
     try {
       await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(status));
     } catch (error) {
@@ -137,7 +141,7 @@ export async function fetchDiscoveryStatus(): Promise<DiscoveryStatus> {
     }
     return status;
   } catch (error) {
-    const cached = await getCached<DiscoveryStatus>(key);
+    const cached = await getCached(key, isDiscoveryStatus);
     if (cached) {
       return {
         ...cached,

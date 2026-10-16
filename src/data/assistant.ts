@@ -1,3 +1,4 @@
+import { isObject } from "./validation";
 import { API_URL, apiFetch } from "./apiConnection";
 import { isSecureApiUrl } from "./networkPolicy";
 
@@ -45,7 +46,11 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("The local AI service could not be reached.");
-  return response.json() as Promise<AssistantStatus>;
+  const status: unknown = await response.json();
+  if (!isObject(status) || typeof status.configured !== "boolean" || status.provider !== "OpenAI" || typeof status.model !== "string") {
+    throw new Error("The assistant returned an unsupported status format.");
+  }
+  return { configured: status.configured, provider: status.provider, model: status.model };
 }
 
 export async function askAssistant(question: string): Promise<AssistantAnswer> {
@@ -59,12 +64,8 @@ export async function askAssistant(question: string): Promise<AssistantAnswer> {
     body: JSON.stringify({ question }),
     signal: AbortSignal.timeout(30_000),
   });
-  const payload = await response.json() as {
-    status?: unknown;
-    answer?: unknown;
-    sources?: unknown;
-    error?: unknown;
-  };
+  const payload: unknown = await response.json();
+  if (!isObject(payload)) throw new Error("The assistant returned an unsupported answer format.");
   if (!response.ok) {
     throw new Error(typeof payload.error === "string" ? payload.error : "The assistant could not answer this question.");
   }

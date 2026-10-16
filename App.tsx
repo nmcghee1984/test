@@ -4,7 +4,7 @@ import { NotoSans_700Bold } from "@expo-google-fonts/noto-sans/700Bold";
 import { NotoSerif_700Bold } from "@expo-google-fonts/noto-serif/700Bold";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AccessibilityInfo,
   Alert,
@@ -17,20 +17,13 @@ import {
 } from "react-native";
 import AskUofGScreen from "./src/components/AskUofGScreen";
 import DiscoverScreen from "./src/components/DiscoverScreen";
-import type { DiscoveryRecord } from "./src/data/discovery";
 import type { CampusEvent } from "./src/data/events";
 import type {
   CampusPlace,
   ClassItem,
 } from "./src/domain/campus";
-import { cancelReminder, scheduleReminder } from "./src/data/reminders";
-import {
-  createSampleDataSource,
-  defaultPreferences,
-  readSavedState,
-  writeSavedState,
-} from "./src/data/storage";
-import type { AppPreferences, SavedState } from "./src/data/storage";
+import { createSampleDataSource } from "./src/data/storage";
+import { useSavedCampusState } from "./src/hooks/useSavedCampusState";
 import { tabs, type PlaceFilter, type Tab } from "./src/navigation";
 import EventsScreen from "./src/screens/EventsScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -53,19 +46,11 @@ export default function App() {
   });
 
   const today = useMemo(() => new Date(), []);
-  const [preferences, setPreferences] = useState<AppPreferences>(defaultPreferences);
-  const [savedSpaces, setSavedSpaces] = useState<string[]>([]);
-  const [savedEvents, setSavedEvents] = useState<string[]>([]);
-  const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
-  const [savedResearch, setSavedResearch] = useState<DiscoveryRecord[]>([]);
-  const [researchInterests, setResearchInterests] = useState<string[]>([]);
-  const [reminders, setReminders] = useState<Record<string, string>>({});
-  const [noticeVisible, setNoticeVisible] = useState(true);
+  const { preferences, updatePreferences, savedSpaces, setSavedSpaces, savedEvents, setSavedEvents,
+    savedPlaces, setSavedPlaces, savedResearch, setSavedResearch, researchInterests, setResearchInterests,
+    reminders, noticeVisible, setNoticeVisible, storageError, actionMessage, setActionMessage,
+    toggleReminder, toggleEventReminderSetting } = useSavedCampusState(campusData);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
-  const [stateLoaded, setStateLoaded] = useState(false);
-  const [storageError, setStorageError] = useState("");
-  const [actionMessage, setActionMessage] = useState("");
-  const webRemindersRestored = useRef(false);
   const todayKey = weekdayKeys[today.getDay()];
   const monday = useMemo(() => {
     const date = new Date(today);
@@ -136,37 +121,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    readSavedState().then(async (saved) => {
-      if (saved) {
-        setPreferences({ ...defaultPreferences, ...saved.preferences });
-        setSavedSpaces(saved.savedSpaces ?? []);
-        setSavedEvents(saved.savedEvents ?? []);
-        setSavedPlaces(saved.savedPlaces ?? []);
-        setSavedResearch(saved.savedResearch ?? []);
-        setResearchInterests(saved.researchInterests ?? []);
-        // Retire reminders scheduled from the three removed demonstration events.
-        // Keep failed cancellations available for retry through Settings.
-        const nextReminders = { ...(saved.reminders ?? {}) };
-        for (const id of ["freshers", "careers", "wellbeing"]) {
-          const key = `event:${id}`;
-          if (!nextReminders[key]) continue;
-          try {
-            await cancelReminder(key, nextReminders[key]);
-            delete nextReminders[key];
-          } catch {
-            setStorageError("An old sample-event reminder could not be cancelled. Turn off event reminders in Settings to retry.");
-          }
-        }
-        setReminders(nextReminders);
-        setNoticeVisible(!saved.dismissedNotice);
-      }
-    }).catch((error: unknown) => {
-      console.error("Could not load saved UofG Life preferences.", error);
-      setStorageError("Some saved preferences could not be loaded.");
-    }).finally(() => setStateLoaded(true));
-  }, []);
-
-  useEffect(() => {
     if (Platform.OS === "web" && typeof window !== "undefined" && window.matchMedia) {
       const media = window.matchMedia("(prefers-reduced-motion: reduce)");
       const update = () => setSystemReducedMotion(media.matches);
@@ -189,124 +143,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!stateLoaded) return;
-    const state: SavedState = {
-      preferences,
-      savedSpaces,
-      savedEvents,
-      savedPlaces,
-      savedResearch,
-      researchInterests,
-      reminders,
-      dismissedNotice: !noticeVisible,
-      updatedAt: new Date().toISOString(),
-    };
-    writeSavedState(state).then(() => setStorageError("")).catch((error: unknown) => {
-      console.error("Could not save UofG Life preferences.", error);
-      setStorageError("Changes could not be saved on this device.");
-    });
-  }, [preferences, savedSpaces, savedEvents, savedPlaces, savedResearch, researchInterests, reminders, noticeVisible, stateLoaded]);
-
-  useEffect(() => {
     if (displayedPlaces.length && !displayedPlaces.some((place) => place.id === selectedPlace.id)) {
       setSelectedPlace(displayedPlaces[0]);
     }
   }, [displayedPlaces, selectedPlace.id]);
-
-  useEffect(() => {
-    if (!stateLoaded || Platform.OS !== "web" || webRemindersRestored.current) return;
-    webRemindersRestored.current = true;
-    const pending = Object.entries(reminders).filter(([, id]) => id.startsWith("web:"));
-    if (!pending.length) return;
-    Promise.all(pending.map(async ([key]) => {
-      let title = "";
-      let body = "";
-      let date: Date | null = null;
-      if (key.startsWith("event:")) {
-        const event = campusData.events.find((item) => key === `event:${item.id}`);
-        if (event) {
-          const [year, month, day] = event.date.split("-").map(Number);
-          title = event.title;
-          body = event.place;
-          date = reminderDate(new Date(year, month - 1, day), event.time, 30);
-        }
-      } else if (key.startsWith("class:")) {
-        const [, dateKey, classId] = key.split(":");
-        const [year, month, day] = dateKey.split("-").map(Number);
-        const item = Object.values(campusData.timetable).flat().find((entry) => entry.id === classId);
-        if (item) {
-          title = item.title;
-          body = `${item.place} · starts at ${item.start}`;
-          date = reminderDate(new Date(year, month - 1, day), item.start, preferences.classReminderMinutes);
-        }
-      }
-      if (!date || !title) return { key, identifier: null };
-      try {
-        const identifier = await scheduleReminder(key, title, body, date, false);
-        return { key, identifier };
-      } catch (error) {
-        console.error("Could not restore a browser reminder.", error);
-        return { key, identifier: null };
-      }
-    })).then((results) => {
-      const invalidKeys = new Set(results.filter((result) => !result.identifier).map((result) => result.key));
-      setReminders((current) => {
-        const next = { ...current };
-        for (const result of results) {
-          if (result.identifier) next[result.key] = result.identifier;
-          else delete next[result.key];
-        }
-        return next;
-      });
-      if (invalidKeys.size) setActionMessage("Some old browser reminders expired or could not be restored.");
-    });
-  }, [stateLoaded]);
-
-  function updatePreferences(update: Partial<AppPreferences>) {
-    setPreferences((current) => ({ ...current, ...update }));
-  }
-
-  async function toggleReminder(key: string, title: string, body: string, date: Date) {
-    const existing = reminders[key];
-    try {
-      if (existing) {
-        await cancelReminder(key, existing);
-        setReminders((current) => {
-          const next = { ...current };
-          delete next[key];
-          return next;
-        });
-        setActionMessage("Reminder removed.");
-        return;
-      }
-      const identifier = await scheduleReminder(key, title, body, date);
-      setReminders((current) => ({ ...current, [key]: identifier }));
-      setActionMessage(`Reminder set for ${date.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" })}.`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "The reminder could not be set.";
-      setActionMessage(message);
-      if (Platform.OS !== "web") Alert.alert("Reminder unavailable", message);
-    }
-  }
-
-  async function toggleEventReminderSetting() {
-    if (!preferences.eventRemindersEnabled) {
-      updatePreferences({ eventRemindersEnabled: true });
-      return;
-    }
-    const activeEventReminders = Object.entries(reminders).filter(([key]) => key.startsWith("event:"));
-    try {
-      await Promise.all(activeEventReminders.map(([key, id]) => cancelReminder(key, id)));
-      setReminders((current) => Object.fromEntries(
-        Object.entries(current).filter(([key]) => !key.startsWith("event:")),
-      ));
-      updatePreferences({ eventRemindersEnabled: false });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not cancel event reminders.";
-      setActionMessage(message);
-      if (Platform.OS !== "web") Alert.alert("Reminder update failed", message);
-    }
-  }
 
   async function openExternal(url: string) {
     try {

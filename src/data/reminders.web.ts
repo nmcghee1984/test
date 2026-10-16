@@ -7,7 +7,7 @@ export async function scheduleReminder(
   date: Date,
   askPermission = true,
 ): Promise<string> {
-  if (date.getTime() <= Date.now()) {
+  if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) {
     throw new Error("This reminder time has already passed.");
   }
   if (!("Notification" in globalThis)) {
@@ -28,6 +28,8 @@ export async function scheduleReminder(
     new Notification(title, { body });
     browserTimers.delete(key);
   };
+  const previous = browserTimers.get(key);
+  if (previous) clearTimeout(previous);
   const timer = setTimeout(notifyWhenDue, Math.min(deadline - Date.now(), 2_147_000_000));
   browserTimers.set(key, timer);
   return `web:${key}`;
