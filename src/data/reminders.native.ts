@@ -17,7 +17,7 @@ export async function scheduleReminder(
   date: Date,
   _askPermission = true,
 ): Promise<string> {
-  if (date.getTime() <= Date.now()) {
+  if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) {
     throw new Error("This reminder time has already passed.");
   }
 

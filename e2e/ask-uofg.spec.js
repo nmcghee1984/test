@@ -57,7 +57,7 @@ for (const bad of [
   { status: 'cited', answer: 'UNSUPPORTED: tuition is free', sources: [{ title: 'Verified', url: 'https://gla.ac.uk.evil.example/policy/' }] },
   { status: 'unverified', answer: 'UNSUPPORTED: tuition is free', sources: [{ title: 'Verified', url: 'https://www.gla.ac.uk/' }] },
 ]) test(`withholds unsupported response ${JSON.stringify(bad.sources)}`, async ({ page }) => {
-  await page.route('**/api/assistant/status', route => route.fulfill({ json: { configured: true, provider: 'OpenAI' } }));
+  await page.route('**/api/assistant/status', route => route.fulfill({ json: { configured: true, provider: 'OpenAI', model: 'test-model' } }));
   await page.route('**/api/assistant', route => route.fulfill({ json: bad }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Ask UofG AI assistant' }).click();

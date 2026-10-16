@@ -1,18 +1,19 @@
 # Architecture and maintainer guide
 
-Updated 16 October 2026 for the screen/module refactor; source baseline before refactor: `6804f45`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and [the delivery plan](student-experience-plan.md) / [data register](student-data-register.md).
+Updated 16 October 2026 for saved-state and reminder lifecycle hardening; source baseline: merged screen refactor `850018c`. This describes implemented code, not the target architecture or a security certification. Student journey planning is in [#28](https://github.com/nmcghee1984/test/issues/28) and [the delivery plan](student-experience-plan.md) / [data register](student-data-register.md).
 
 ## Current runtime and code map
 
 | Boundary | Implementation | Responsibility / limitation |
 | --- | --- | --- |
-| App composition | `App.tsx` | App shell/navigation, explicit screen props, preferences/favourites and reminder coordination. Screen rendering, primitives, styles and scheduling helpers are separate modules. |
+| App composition | `App.tsx` | App shell/navigation and explicit screen props; saved state and reminder coordination are delegated to `useSavedCampusState`. Screen rendering, primitives, styles and scheduling helpers are separate modules. |
 | Journey screens | `src/screens/*Screen.tsx`; existing `src/components/DiscoverScreen.tsx`, `AskUofGScreen.tsx` | Explicitly typed inputs for Home, Timetable, Map, Study, Events and Settings; existing discovery/assistant boundaries retained. |
 | Shared UI | `src/ui/primitives.tsx`, `theme.ts`, `styles.ts`; `src/components/CampusCards.tsx` | Context-based text-size/contrast, shared controls/cards and styling. No mutable module-level appearance settings. |
 | Models and scheduling | `src/domain/campus.ts`, `src/utils/schedule.ts`, `src/navigation.ts` | Source-independent prototype model declarations, labelled sample date/calendar helpers and navigation types. |
 | Platform map/reminders | `CampusMap.native.tsx`, `CampusMap.web.tsx`; `src/data/reminders.native.ts`, `.web.ts` | Expo resolves platform-specific files. Native maps stay out of web. Browser reminders are foreground timers, not durable push delivery. |
+| Saved-state lifecycle | `src/hooks/useSavedCampusState.ts`, `src/data/stateLifecycle.ts`, `storage.ts` | Hydration, ordered writes, serialized reminder actions and restart recovery; existing `uofg-life:local-state:v1` key retained. |
 | Prototype domain data | `src/data/mockData.ts`, `storage.ts`, `events.ts` | Sample timetable/place/study fixtures and local saved state; events are explicitly unavailable. The data-source uses explicit campus model types; compatibility type exports preserve existing fixture consumers. |
-| Client API transport | `src/data/apiConnection.ts`, `networkPolicy.js`, `discovery.ts`, `assistant.ts` | HTTPS or loopback HTTP validation, timeout/connection errors, discovery cache and assistant-response filtering. JSON type casts do not constitute complete runtime schema validation. |
+| Client API transport | `src/data/apiConnection.ts`, `networkPolicy.js`, `discovery.ts`, `assistant.ts` | HTTPS or loopback HTTP validation, timeout/connection errors, discovery cache and assistant-response filtering. Shared runtime validators check discovery API/cache records, pages and status; assistant status/answer boundaries validate objects and preserve citation filtering. |
 | Local HTTP backend | `server/index.js`, `deviceAccess.js`, `env.js` | Source index/search and assistant routes; loopback development or private Serve identity mode. No University SSO or production deployment. |
 | Public research ingestion | `sources.js`, `oai.js`, `harvest.js`, `store.js` | Fixed source catalogue, bounded OAI-PMH/XML reads, normalization, deletions and atomic local index persistence. |
 | Assistant provider boundary | `server/assistant.js` | Server-only OpenAI key; bounded request, origin/rate controls, public University search, citation checks and conservative withholding. Structural evidence validation is not proof every claim is correct. |
@@ -58,7 +59,17 @@ Server-side provider credentials, bounded public ingestion/persistence, shared U
 
 Tracked in [#30](https://github.com/nmcghee1984/test/issues/30). The first bounded refactor extracts six screens with explicit props, shared cards/primitives/styles, local-date helpers and campus model declarations. Appearance settings use React context; the unused server global index assignment is removed. Saved-state keys, sample/unavailable labels, actions and API behaviour are preserved.
 
-App-level persistence and reminder orchestration still live in the app shell. Extract these into focused hooks in subsequent behaviour-preserving changes, with saved-state migration and cancellation/error recovery kept explicit. External/cached JSON validation is still incomplete; strengthen schema validation before private integrations. The prototype models are not an approved live-data contract. Reuse timetable PR #7 rather than inventing another adapter.
+The saved-state/reminder follow-up moves orchestration into `useSavedCampusState` and pure, injected-port lifecycle services. Recovery rules are:
+
+- Parse preferences field by field, including strict booleans and supported reminder lead times. Preserve intentional empty home sections, valid favourites, research interests and reminder IDs; missing legacy fields receive defaults. Unknown preference keys never enter runtime state. Malformed individual saved research records are excluded; all optional display fields are validated.
+- A failed read, corrupt JSON or non-object root leaves the original storage value untouched and disables writes/reminder actions for that session. Preferences remain usable in memory; restart retries storage. There is no automatic reset or deletion. Partial object states salvage valid fields instead of discarding all preferences because a collection is absent.
+- Hydration completes reminder recovery before the first write. Preference fields edited while hydration waits override only those fields; untouched saved preferences and favourites are retained. StrictMode effect replay shares one initialization promise.
+- Writes run in order and report failures; later changes can retry saving. Reminder actions also run in order against current IDs, so rapid toggles and Settings cancellation cannot operate on stale render snapshots. Successful writes do not clear reminder recovery warnings.
+- Only successful cancellations remove IDs. Partial batch failure retains failed IDs and leaves event reminders enabled for retry. The three retired demonstration event reminders still cancel on startup.
+- Browser restart restores known future reminders without prompting for permission. Known expired reminders are removed; missing source data, malformed occurrence keys and scheduling/permission failures retain IDs for recovery or cancellation through Settings. Native IDs are not rescheduled on startup. Invalid dates cannot create platform timers; replacing a browser timer clears the previous timer for that key.
+- Discovery live responses and offline cache responses use the same runtime schema validators. Invalid live responses can fall back to a valid cache; invalid/unreadable caches cannot reach rendering and preserve the original service error. Valid caches continue to work offline. Assistant object/status validation supplements the existing citation policy.
+
+`npm run test:state` covers malformed/partial legacy preferences, storage failures and restart round trips, write ordering, partial cancellation retries, native/browser restoration and API/cache validation. `e2e/saved-state.spec.js` exercises recovery and hydration through the actual browser app, alongside the existing browser/accessibility suite. These are prototype public-data contracts, not approved private/student data contracts. Cache age/retention, production persistence and live-data integrations remain separate work. Reuse timetable PR #7 rather than inventing another adapter.
 
 This is a source/documentation review and refactor, not a full security audit or native-device certification. Do not combine this work with a major SDK migration or claim private/student integrations are operational.
 
